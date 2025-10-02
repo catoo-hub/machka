@@ -32,7 +32,6 @@
             action="{{ request.app.router['panel-logout'].url_for() }}"
             method="post"
           >
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
             <button type="submit">Выйти</button>
           </form>
         </div>

@@ -1,7 +1,5 @@
-import hmac
 import math
-import secrets
-from typing import Any, Dict, Mapping, Optional
+from typing import Any, Dict, Optional
 
 import aiohttp_jinja2
 from aiohttp import web
@@ -14,10 +12,6 @@ from config.settings import Settings
 from bot.services.support_service import SupportService
 from db.models import User, Payment, Subscription, SupportTicket
 from db.dal import user_dal, payment_dal
-
-
-CSRF_SESSION_KEY = "panel_csrf_token"
-CSRF_FORM_FIELD = "csrf_token"
 
 
 def _panel_config(request: web.Request) -> Dict[str, Any]:
@@ -46,33 +40,6 @@ def _session_factory(request: web.Request):
 def _password_hash(request: web.Request) -> Optional[str]:
     cfg = _panel_config(request)
     return cfg.get("password_hash")
-
-
-async def _ensure_csrf_token(request: web.Request) -> str:
-    session = await get_session(request)
-    token = session.get(CSRF_SESSION_KEY)
-    if not token:
-        token = secrets.token_urlsafe(32)
-        session[CSRF_SESSION_KEY] = token
-    return token
-
-
-async def panel_context_processor(request: web.Request) -> Dict[str, Any]:
-    try:
-        token = await _ensure_csrf_token(request)
-    except RuntimeError:
-        return {}
-    return {"csrf_token": token}
-
-
-async def _validate_csrf(request: web.Request, data: Mapping[str, Any]) -> None:
-    session = await get_session(request)
-    expected = session.get(CSRF_SESSION_KEY)
-    provided = data.get(CSRF_FORM_FIELD)
-    if not expected or not provided:
-        raise web.HTTPForbidden(reason="CSRF token missing")
-    if not hmac.compare_digest(str(provided), str(expected)):
-        raise web.HTTPForbidden(reason="CSRF token mismatch")
 
 
 def _require_panel_enabled(request: web.Request):
@@ -113,7 +80,6 @@ async def login_submit(request: web.Request) -> web.StreamResponse:
         raise web.HTTPMethodNotAllowed(method=request.method, allowed_methods=["POST"])
 
     data = await request.post()
-    await _validate_csrf(request, data)
     login = (data.get("login") or "").strip()
     password = data.get("password") or ""
 
@@ -136,8 +102,6 @@ async def login_submit(request: web.Request) -> web.StreamResponse:
 
 
 async def logout_handler(request: web.Request) -> web.StreamResponse:
-    data = await request.post()
-    await _validate_csrf(request, data)
     session = await get_session(request)
     session.invalidate()
     raise web.HTTPFound(_auth_route("/login"))
@@ -276,7 +240,6 @@ async def ticket_update_status(request: web.Request) -> web.StreamResponse:
     support_service = _support_service(request)
     ticket_id = int(request.match_info["ticket_id"])
     data = await request.post()
-    await _validate_csrf(request, data)
     new_status = data.get("status")
     if new_status not in {"open", "closed"}:
         raise web.HTTPBadRequest()
@@ -291,7 +254,6 @@ async def ticket_reply(request: web.Request) -> web.StreamResponse:
     support_service = _support_service(request)
     ticket_id = int(request.match_info["ticket_id"])
     data = await request.post()
-    await _validate_csrf(request, data)
     message = (data.get("message") or "").strip()
     if not message:
         raise web.HTTPFound(_auth_route(f"/tickets/{ticket_id}"))
@@ -303,7 +265,5 @@ async def ticket_delete(request: web.Request) -> web.StreamResponse:
     await _ensure_authenticated(request)
     support_service = _support_service(request)
     ticket_id = int(request.match_info["ticket_id"])
-    data = await request.post()
-    await _validate_csrf(request, data)
     await support_service.delete_ticket(ticket_id)
     raise web.HTTPFound(_auth_route("/tickets"))

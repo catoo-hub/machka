@@ -22,7 +22,6 @@
         method="post"
         action="{{ request.app.router['panel-login-submit'].url_for() }}"
       >
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
         <div class="form-group">
           <label for="login">Логин</label>
           <input

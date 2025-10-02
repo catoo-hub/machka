@@ -30,7 +30,6 @@ ticket.ticket_id }}{% endblock %} {% block content %}
   action="{{ request.app.router['panel-ticket-status'].url_for(ticket_id=str(ticket.ticket_id)) }}"
   class="form-inline"
 >
-  <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
   {% if ticket.status == 'open' %}
   <input type="hidden" name="status" value="closed" />
   <button type="submit" class="btn btn-secondary">Закрыть</button>
@@ -45,7 +44,6 @@ ticket.ticket_id }}{% endblock %} {% block content %}
   method="post"
   action="{{ request.app.router['panel-ticket-reply'].url_for(ticket_id=str(ticket.ticket_id)) }}"
 >
-  <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
   <div class="form-group">
     <textarea
       class="form-control"
@@ -62,7 +60,6 @@ ticket.ticket_id }}{% endblock %} {% block content %}
   action="{{ request.app.router['panel-ticket-delete'].url_for(ticket_id=str(ticket.ticket_id)) }}"
   onsubmit="return confirm('Удалить тикет?');"
 >
-  <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
   <button type="submit" class="btn btn-danger">Удалить тикет</button>
 </form>
 {% endblock %}
