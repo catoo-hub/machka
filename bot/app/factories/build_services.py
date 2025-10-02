@@ -12,6 +12,7 @@ from bot.services.stars_service import StarsService
 from bot.services.tribute_service import TributeService
 from bot.services.crypto_pay_service import CryptoPayService
 from bot.services.panel_webhook_service import PanelWebhookService
+from bot.services.support_service import SupportService
 
 
 def build_core_services(
@@ -46,6 +47,7 @@ def build_core_services(
         referral_service,
     )
     panel_webhook_service = PanelWebhookService(bot, settings, i18n, async_session_factory, panel_service)
+    support_service = SupportService(settings, async_session_factory)
     yookassa_service = YooKassaService(
         shop_id=settings.YOOKASSA_SHOP_ID,
         secret_key=settings.YOOKASSA_SECRET_KEY,
@@ -73,6 +75,7 @@ def build_core_services(
         "tribute_service": tribute_service,
         "panel_webhook_service": panel_webhook_service,
         "yookassa_service": yookassa_service,
+        "support_service": support_service,
     }
 
 

@@ -6,6 +6,7 @@ from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_applicati
 from sqlalchemy.orm import sessionmaker
 
 from config.settings import Settings
+from bot.web_panel.setup import setup_web_panel
 
 
 async def build_and_start_web_app(
@@ -34,6 +35,17 @@ async def build_and_start_web_app(
         # Access dispatcher workflow_data directly to avoid sequence protocol issues
         if hasattr(dp, "workflow_data") and key in dp.workflow_data:  # type: ignore
             app[key] = dp.workflow_data[key]  # type: ignore
+
+    support_service = None
+    try:
+        support_service = dp["support_service"]
+    except KeyError:
+        logging.warning("Support service not found in dispatcher; web panel support features disabled.")
+
+    if support_service is not None:
+        setup_web_panel(app, settings, async_session_factory, support_service)
+    else:
+        logging.info("Skipping web panel setup due to missing support service.")
 
     setup_application(app, dp, bot=bot)
 

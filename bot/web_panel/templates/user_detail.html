@@ -1,0 +1,70 @@
+{% extends "base.html" %} {% block title %}Machka Panel — Пользователь {{
+user.user_id }}{% endblock %} {% block content %}
+<h1>Пользователь {{ user.user_id }}</h1>
+<div class="card">
+  <p><strong>Username:</strong> {{ user.username or '—' }}</p>
+  <p>
+    <strong>Имя:</strong> {{ user.first_name or '—' }} {{ user.last_name or ''
+    }}
+  </p>
+  <p><strong>Язык:</strong> {{ user.language_code }}</p>
+  <p><strong>Регистрация:</strong> {{ user.registration_date }}</p>
+  <p><strong>Заблокирован:</strong> {{ 'Да' if user.is_banned else 'Нет' }}</p>
+</div>
+
+<h2>Подписки</h2>
+<table class="table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Статус</th>
+      <th>Провайдер</th>
+      <th>Начало</th>
+      <th>Окончание</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for subscription in subscriptions %}
+    <tr>
+      <td>{{ subscription.subscription_id }}</td>
+      <td>{{ 'Активна' if subscription.is_active else 'Неактивна' }}</td>
+      <td>{{ subscription.provider or 'trial' }}</td>
+      <td>{{ subscription.start_date }}</td>
+      <td>{{ subscription.end_date }}</td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="5">Нет подписок.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<h2>Платежи</h2>
+<table class="table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Сумма</th>
+      <th>Статус</th>
+      <th>Провайдер</th>
+      <th>Дата</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for payment in payments %}
+    <tr>
+      <td>{{ payment.payment_id }}</td>
+      <td>{{ payment.amount }} {{ payment.currency }}</td>
+      <td>{{ payment.status }}</td>
+      <td>{{ payment.provider }}</td>
+      <td>{{ payment.created_at }}</td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="5">Нет платежей.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

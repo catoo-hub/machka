@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <title>{% block title %}Machka Panel{% endblock %}</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/@tabler/core@1.0.0-beta20/dist/css/tabler.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="{{ app.router['panel-static'].url_for(filename='css/style.css') }}"
+    />
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="container">
+        <a
+          class="navbar-brand"
+          href="{{ request.app.router['panel-home'].url_for() }}"
+          >Machka Panel</a
+        >
+        <div class="nav-links">
+          <a href="{{ request.app.router['panel-users'].url_for() }}"
+            >Пользователи</a
+          >
+          <a href="{{ request.app.router['panel-tickets'].url_for() }}"
+            >Поддержка</a
+          >
+          <form
+            class="logout-form"
+            action="{{ request.app.router['panel-logout'].url_for() }}"
+            method="post"
+          >
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+            <button type="submit">Выйти</button>
+          </form>
+        </div>
+      </div>
+    </nav>
+    <div class="container">{% block content %}{% endblock %}</div>
+  </body>
+</html>

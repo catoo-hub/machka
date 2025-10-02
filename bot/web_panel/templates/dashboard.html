@@ -1,0 +1,60 @@
+{% extends "base.html" %} {% block title %}Machka Panel — Дашборд{% endblock %}
+{% block content %}
+<h1>Дашборд</h1>
+<div class="grid">
+  <div class="card">
+    <div class="card-title">Пользователи</div>
+    <div class="card-value">{{ user_stats.total_users }}</div>
+    <div class="card-meta">Активных сегодня: {{ user_stats.active_today }}</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Подписки</div>
+    <div class="card-value">{{ user_stats.paid_subscriptions }}</div>
+    <div class="card-meta">Пробные: {{ user_stats.trial_users }}</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Платежи (успешных)</div>
+    <div class="card-value">{{ payments_count }}</div>
+  </div>
+  <div class="card">
+    <div class="card-title">Поддержка</div>
+    <div class="card-value">{{ support_counts.open }} открытых</div>
+    <div class="card-meta">Всего тикетов: {{ support_counts.all }}</div>
+  </div>
+</div>
+
+<h2>Последние платежи</h2>
+<table class="table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Пользователь</th>
+      <th>Сумма</th>
+      <th>Статус</th>
+      <th>Дата</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for payment in latest_payments %}
+    <tr>
+      <td>{{ payment.payment_id }}</td>
+      <td>
+        {% if payment.user %}
+        <a
+          href="{{ request.app.router['panel-user-detail'].url_for(user_id=str(payment.user_id)) }}"
+          >{{ payment.user.username or payment.user_id }}</a
+        >
+        {% else %} {{ payment.user_id }} {% endif %}
+      </td>
+      <td>{{ payment.amount }} {{ payment.currency }}</td>
+      <td>{{ payment.status }}</td>
+      <td>{{ payment.created_at }}</td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="5">Нет данных.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

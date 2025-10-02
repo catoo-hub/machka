@@ -259,3 +259,46 @@ class AdAttribution(Base):
 
     user = relationship("User")
     campaign = relationship("AdCampaign", back_populates="attributions")
+
+
+class SupportTicket(Base):
+    __tablename__ = "support_tickets"
+
+    ticket_id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(BigInteger, ForeignKey("users.user_id"), nullable=True, index=True)
+    subject = Column(String(255), nullable=True)
+    status = Column(String(32), nullable=False, default="open", index=True)
+    priority = Column(String(32), nullable=False, default="normal")
+    is_starred = Column(Boolean, default=False, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    updated_at = Column(DateTime(timezone=True), onupdate=func.now(), nullable=True)
+    closed_at = Column(DateTime(timezone=True), nullable=True)
+    last_user_message_at = Column(DateTime(timezone=True), nullable=True)
+    last_admin_message_at = Column(DateTime(timezone=True), nullable=True)
+    forum_chat_id = Column(BigInteger, nullable=True)
+    forum_thread_id = Column(Integer, nullable=True)
+    assigned_admin_id = Column(BigInteger, nullable=True)
+    extra_metadata = Column(Text, nullable=True)
+
+    user = relationship("User")
+    messages = relationship(
+        "SupportMessage",
+        back_populates="ticket",
+        cascade="all, delete-orphan",
+        order_by="SupportMessage.created_at",
+    )
+
+
+class SupportMessage(Base):
+    __tablename__ = "support_messages"
+
+    message_id = Column(Integer, primary_key=True, autoincrement=True)
+    ticket_id = Column(Integer, ForeignKey("support_tickets.ticket_id"), nullable=False, index=True)
+    sender_type = Column(String(32), nullable=False, index=True)
+    sender_id = Column(BigInteger, nullable=True, index=True)
+    sender_username = Column(String(255), nullable=True)
+    content = Column(Text, nullable=False)
+    attachments = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+
+    ticket = relationship("SupportTicket", back_populates="messages")

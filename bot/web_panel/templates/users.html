@@ -1,0 +1,45 @@
+{% extends "base.html" %} {% block title %}Machka Panel — Пользователи{%
+endblock %} {% block content %}
+<h1>Пользователи</h1>
+<table class="table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Username</th>
+      <th>Язык</th>
+      <th>Регистрация</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for user in users %}
+    <tr>
+      <td>{{ user.user_id }}</td>
+      <td>{{ user.username or '—' }}</td>
+      <td>{{ user.language_code }}</td>
+      <td>{{ user.registration_date }}</td>
+      <td>
+        <a
+          class="btn btn-sm"
+          href="{{ request.app.router['panel-user-detail'].url_for(user_id=str(user.user_id)) }}"
+          >Подробнее</a
+        >
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="5">Нет пользователей.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<div class="pagination">
+  {% if page > 1 %}
+  <a href="{{ request.rel_url.with_query(page=page-1) }}">Назад</a>
+  {% endif %}
+  <span>Стр. {{ page }} / {{ total_pages }}</span>
+  {% if page < total_pages %}
+  <a href="{{ request.rel_url.with_query(page=page+1) }}">Вперед</a>
+  {% endif %}
+</div>
+{% endblock %}

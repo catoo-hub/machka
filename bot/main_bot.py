@@ -35,6 +35,7 @@ from bot.services.promo_code_service import PromoCodeService
 from bot.services.stars_service import StarsService
 from bot.services.tribute_service import TributeService, tribute_webhook_route
 from bot.services.crypto_pay_service import CryptoPayService, cryptopay_webhook_route
+from bot.support_bot import create_support_bot, SupportBotRunner
 
 from bot.handlers.user import payment as user_payment_webhook_module
 from bot.handlers.admin.sync_admin import perform_sync
@@ -259,6 +260,9 @@ async def run_bot(settings_param: Settings):
         dp[key] = service
     dp["panel_service"] = services["panel_service"]
     dp["async_session_factory"] = local_async_session_factory
+    dp["support_service"] = services["support_service"]
+
+    support_runner: SupportBotRunner | None = create_support_bot(settings_param, services["support_service"])
 
     # Wrap startup/shutdown handlers to satisfy aiogram event signature (no args passed)
     async def _on_startup_wrapper():
@@ -293,6 +297,11 @@ async def run_bot(settings_param: Settings):
 
     main_tasks.append(asyncio.create_task(web_server_task(), name="AIOHTTPServerTask"))
 
+    support_bot_task: asyncio.Task | None = None
+    if support_runner is not None:
+        support_bot_task = asyncio.create_task(support_runner.start(), name="SupportBotPolling")
+        main_tasks.append(support_bot_task)
+
     # Recurring billing moved to panel webhook (24h before expiry). No periodic task needed here.
 
     logging.info("Starting bot in Webhook mode with AIOHTTP server...")
@@ -322,6 +331,13 @@ async def run_bot(settings_param: Settings):
         if web_app_runner:
             await web_app_runner.cleanup()
             logging.info("AIOHTTP AppRunner cleaned up.")
+
+        if support_runner is not None:
+            try:
+                await support_runner.shutdown()
+                logging.info("Support bot shutdown completed.")
+            except Exception as support_shutdown_exc:
+                logging.error("Failed to shutdown support bot cleanly: %s", support_shutdown_exc, exc_info=True)
 
         await dp.emit_shutdown()
         logging.info("Dispatcher shutdown sequence emitted.")

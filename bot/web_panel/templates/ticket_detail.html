@@ -1,0 +1,68 @@
+{% extends "base.html" %} {% block title %}Machka Panel — Тикет #{{
+ticket.ticket_id }}{% endblock %} {% block content %}
+<h1>Тикет #{{ ticket.ticket_id }}</h1>
+<div class="card">
+  <p><strong>Статус:</strong> {{ ticket.status }}</p>
+  <p><strong>Пользователь:</strong> {{ ticket.user_id or '—' }}</p>
+  <p><strong>Тема:</strong> {{ ticket.subject or '—' }}</p>
+  <p><strong>Создан:</strong> {{ ticket.created_at }}</p>
+</div>
+
+<h2>Переписка</h2>
+<div class="chat">
+  {% for message in ticket.messages %}
+  <div class="chat-message {{ message.sender_type }}">
+    <div class="chat-author">
+      {% if message.sender_type == 'user' %} Пользователь {% elif
+      message.sender_type == 'admin' %} Администратор {% else %} Система {%
+      endif %}
+      <span class="chat-time">{{ message.created_at }}</span>
+    </div>
+    <div class="chat-content">{{ message.content }}</div>
+  </div>
+  {% else %}
+  <p>Сообщений пока нет.</p>
+  {% endfor %}
+</div>
+
+<form
+  method="post"
+  action="{{ request.app.router['panel-ticket-status'].url_for(ticket_id=str(ticket.ticket_id)) }}"
+  class="form-inline"
+>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+  {% if ticket.status == 'open' %}
+  <input type="hidden" name="status" value="closed" />
+  <button type="submit" class="btn btn-secondary">Закрыть</button>
+  {% else %}
+  <input type="hidden" name="status" value="open" />
+  <button type="submit" class="btn btn-secondary">Открыть</button>
+  {% endif %}
+</form>
+
+<h2>Ответ</h2>
+<form
+  method="post"
+  action="{{ request.app.router['panel-ticket-reply'].url_for(ticket_id=str(ticket.ticket_id)) }}"
+>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+  <div class="form-group">
+    <textarea
+      class="form-control"
+      name="message"
+      rows="4"
+      placeholder="Введите ответ"
+    ></textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Отправить</button>
+</form>
+
+<form
+  method="post"
+  action="{{ request.app.router['panel-ticket-delete'].url_for(ticket_id=str(ticket.ticket_id)) }}"
+  onsubmit="return confirm('Удалить тикет?');"
+>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}" />
+  <button type="submit" class="btn btn-danger">Удалить тикет</button>
+</form>
+{% endblock %}
