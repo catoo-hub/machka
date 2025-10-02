@@ -1,4 +1,6 @@
+import logging
 import math
+from html import escape
 from typing import Any, Dict, Optional
 
 import aiohttp_jinja2
@@ -50,6 +52,18 @@ def _require_panel_enabled(request: web.Request):
 
 def _auth_route(path: str) -> str:
     return f"/panel{path}"
+
+
+async def _notify_support_user(request: web.Request, user_id: Optional[int], text: str) -> None:
+    if not user_id or not text:
+        return
+    notifier = request.app.get("panel_notify_user")
+    if not notifier:
+        return
+    try:
+        await notifier(user_id, text)
+    except Exception as exc:
+        logging.warning("Support panel failed to notify user %s: %s", user_id, exc)
 
 
 def register_routes(app: web.Application) -> None:
@@ -246,6 +260,14 @@ async def ticket_update_status(request: web.Request) -> web.StreamResponse:
     ticket = await support_service.update_status(ticket_id=ticket_id, new_status=new_status)
     if not ticket:
         raise web.HTTPNotFound()
+    notification_text = None
+    if ticket.user_id:
+        if new_status == "closed":
+            notification_text = f"🔒 Ваш тикет #{ticket.ticket_id} закрыт."
+        else:
+            notification_text = f"🔓 Ваш тикет #{ticket.ticket_id} снова открыт."
+    if notification_text:
+        await _notify_support_user(request, ticket.user_id, notification_text)
     raise web.HTTPFound(_auth_route(f"/tickets/{ticket_id}"))
 
 
@@ -258,6 +280,14 @@ async def ticket_reply(request: web.Request) -> web.StreamResponse:
     if not message:
         raise web.HTTPFound(_auth_route(f"/tickets/{ticket_id}"))
     await support_service.add_admin_message(ticket_id=ticket_id, admin_id=None, message=message)
+    ticket = await support_service.get_ticket(ticket_id)
+    if ticket:
+        escaped_message = escape(message, quote=False)
+        await _notify_support_user(
+            request,
+            ticket.user_id,
+            f"📨 Ответ по тикету #{ticket.ticket_id}:\n{escaped_message}",
+        )
     raise web.HTTPFound(_auth_route(f"/tickets/{ticket_id}"))
 
 

@@ -1,4 +1,3 @@
-import asyncio
 import logging
 import secrets
 from pathlib import Path
@@ -6,6 +5,9 @@ from typing import Optional
 
 import aiohttp_jinja2
 import jinja2
+from aiogram import Bot
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
 from aiohttp import web
 from aiohttp_jinja2 import request_processor
 from aiohttp_session import setup as setup_sessions
@@ -67,5 +69,38 @@ def setup_web_panel(
     app["panel_password_context"] = PASSWORD_CONTEXT
 
     app.router.add_static("/panel/static", path=str(static_root), name="panel-static")
+
+    support_bot: Optional[Bot] = None
+    support_bot_token = settings.SUPPORT_BOT_TOKEN or settings.BOT_TOKEN
+    if support_bot_token:
+        if settings.SUPPORT_BOT_TOKEN:
+            support_bot = Bot(
+                token=support_bot_token,
+                default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+            )
+
+            async def _close_support_bot(application: web.Application) -> None:
+                try:
+                    await support_bot.session.close()
+                except Exception:
+                    logging.exception("Failed to close support panel bot session")
+
+            app.on_cleanup.append(_close_support_bot)
+        else:
+            # Reuse main bot if dedicated support bot is not configured
+            support_bot = app.get("bot")
+    else:
+        logging.warning("Support notifications disabled: no bot token available.")
+
+    async def _notify_user(user_id: Optional[int], text: str) -> None:
+        if not user_id or not text or support_bot is None:
+            return
+        try:
+            await support_bot.send_message(chat_id=user_id, text=text)
+        except Exception as exc:
+            logging.warning("Failed to deliver support reply to %s: %s", user_id, exc)
+
+    app["panel_support_bot"] = support_bot
+    app["panel_notify_user"] = _notify_user
 
     views.register_routes(app)
