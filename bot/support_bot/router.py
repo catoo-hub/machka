@@ -125,7 +125,6 @@ def ticket_admin_keyboard(ticket: SupportTicket) -> types.InlineKeyboardMarkup:
 
 def build_support_router(settings: Settings, support_service: SupportService) -> Router:
     router = Router(name="support-bot")
-    router.data.update(settings=settings, support_service=support_service)
 
     @router.message(CommandStart())
     async def start_handler(message: types.Message) -> None:
