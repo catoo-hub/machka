@@ -7,6 +7,7 @@ from typing import Optional
 import aiohttp_jinja2
 import jinja2
 from aiohttp import web
+from aiohttp_jinja2 import request_processor
 from aiohttp_session import setup as setup_sessions
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from passlib.context import CryptContext
@@ -33,7 +34,11 @@ def setup_web_panel(
     template_root = Path(__file__).parent / "templates"
     static_root = Path(__file__).parent / "static"
 
-    aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(str(template_root)))
+    aiohttp_jinja2.setup(
+        app,
+        loader=jinja2.FileSystemLoader(str(template_root)),
+        context_processors=[request_processor],
+    )
 
     session_secret = settings.WEB_PANEL_SESSION_SECRET
     if session_secret:
