@@ -34,11 +34,12 @@ def setup_web_panel(
     template_root = Path(__file__).parent / "templates"
     static_root = Path(__file__).parent / "static"
 
-    aiohttp_jinja2.setup(
+    env = aiohttp_jinja2.setup(
         app,
         loader=jinja2.FileSystemLoader(str(template_root)),
         context_processors=[request_processor],
     )
+    env.globals.setdefault("str", str)
 
     session_secret = settings.WEB_PANEL_SESSION_SECRET
     if session_secret:

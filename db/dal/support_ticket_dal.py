@@ -121,8 +121,8 @@ async def get_tickets_paginated(
     stmt = stmt.order_by(
         asc(SupportTicket.status),
         desc(SupportTicket.is_starred),
-        desc(SupportTicket.updated_at.nullslast()),
-        desc(SupportTicket.created_at),
+        SupportTicket.updated_at.desc().nullslast(),
+        SupportTicket.created_at.desc(),
     )
     stmt = stmt.offset(max(page - 1, 0) * per_page).limit(per_page)
 
